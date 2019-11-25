@@ -1,0 +1,112 @@
+#!/on recyclebin(){
+
+function recyclebin(){
+if [ ! -d $HOME/recyclebin ]
+        then mkdir $HOME/recyclebin
+fi
+}
+function recycle() {
+
+for loop in $*
+do
+
+
+## IF STATEMENTS FOR POSSIBLE ERRORS ##
+
+if [ ! -e "$loop" ]
+        then  echo "ERROR: File does not exist"
+        return 1
+fi
+if [[ -d "$loop" && $optr -eq 1 ]]
+then
+
+        bash ~/project/recycle -r $loop/*
+
+
+rmdir $loop
+fi
+if [ -d "$loop" ]
+        then echo "ERROR: Directory name provided"
+        return 1
+fi
+
+if [[ $(readlink -f "$loop") = "$HOME/project/recycle" ]]
+        then echo "ERROR: Cannot delete script"
+        return 1
+fi
+## IF STATEMENTS FOR v AND i OPTIONS ##
+        if [[ $opti -eq 1 && $optv -eq 1 ]]
+                then read -p "Confirm: recycle file (y/n): " recyc
+
+        if [[ "$recyc" = [Yy*] ]]
+                then echo "File is recycled"
+        else return 1
+        fi
+
+        elif [ $opti -eq 1 ]
+                then read -p "Confirm: recycle file (y/n): " recyc
+
+        if [[ "$recyc" != [Yy*] ]]
+        then    return 1
+        fi
+
+        elif [ $optv -eq 1 ]
+        then echo "file is recycled."
+
+fi
+## VARIABLES CREATED IN ORDER TO MOVE FILES TO RECYCLEBIN ##
+        ## INODE GETS INODE NUMBER
+if [ -f "$loop" ]
+then
+
+        inode=$(ls -i "$loop" | cut -d " " -f1)
+        fil=$(echo -n "$loop" | cut -d ":" -f2 | rev | cut -d "/" -f1 | rev)
+
+        ## newFILE ATTACHED INODE NUM TO FILE
+        newfile=$fil"_"$inode
+        ## LINK GETS FULL LINK OF FILE
+        link=$(readlink -f $loop)
+        ## HIDFILELINK APPENDS FILE NAME TO LINK
+        hidfilelink=$newfile":"$link
+        ## NOW I APPEND FILE WITH LINK TO HIDDEN FILE
+        echo "$hidfilelink" >> ~/.restore.info
+        ## NOW I MOVE THE FILE
+        mv "$loop" ~/recyclebin/$newfile
+
+fi
+done
+
+}
+recyclebin
+## DECLARE OPTIONS
+opti=0
+optv=0
+optr=0
+
+## WHILE LOOP FOR OPTION CASES
+while getopts ivr opt
+do
+        case $opt in
+        i) opti=1;;
+        v) optv=1;;
+        r) optr=1;;
+        *) echo "Invalid Argument"
+                exit 1          ;;
+        esac
+done
+
+
+
+shift $[$OPTIND-1]
+if [ $# -eq 0 ]
+        then echo "ERROR: No filename provided."
+fi
+for arg in $*
+do
+
+ recycle $arg
+
+
+
+
+done

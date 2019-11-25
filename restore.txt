@@ -1,0 +1,55 @@
+#!/bin/bash
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+# CREATE FUNCTION RESTORE
+function restore() {
+echo $1
+
+#ERROR IF NO ARGUMENT IS PROVIDED
+if [ "$1" = ""  ]
+        then echo "ERROR: No filename provided"
+        exit 1
+fi
+
+#ERROR IF FILE DOES NOT EXIST
+if [ ! -e ~/recyclebin/"$1" ]
+        then echo "ERROR: file does not exist in recyclebin
+"
+exit 1
+fi
+
+# CREATE VARIABLE THAT FINDS MATCHING FILE
+file=$(ls ~/recyclebin | fgrep "$1")
+# CREATE VARIABLE THAT GIVES LINK TO FILE
+link=$(fgrep "$1" ~/.restore.info | cut -d ":" -f2 | uniq)
+link2=$(fgrep "$1" ~/.restore.info | cut -d ":" -f2 | rev | cut -d "/" -f2- | rev)
+echo " "
+echo "$link2"
+
+#CREATE DIRECTORIES IN HOME
+
+mkdir -p $link2
+#CONDITION IF FILE ALREADY EXISTS AND OPTION TO OVERWRITE
+if [ -e $link ]
+then read -p "Do you want to overwrite(y/n): " over
+#IF USER INPUTS ANYTHING OTHER THAN YES, SCRIPT ENDS
+        if [[ $over != [Yy*] ]]
+        then     exit 1
+fi
+fi
+
+# MOVE RECYCLED GILE BACK TO ORIGINAL LOCATION
+mv ~/recyclebin/$file $link
+sed -i "/$1/d" ~/.restore.info
+
+}
+#CALL THE FUNCTIoN
+restore $1
